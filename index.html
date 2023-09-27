@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Interactive Tutorial</title><link rel="stylesheet" href="./style.css"><script src="https://unpkg.com/es-module-shims@1.4.4/dist/es-module-shims.js" async=""></script><script type="importmap">{"imports": {
+  "@testing-library/dom": "https://jspm.dev/@testing-library/dom",
+  "@testing-library/jest-dom": "https://jspm.dev/@testing-library/jest-dom"
+}}</script></head><body>
+
+  
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveCodes Tutorial Demo</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        font: 0.9em sans-serif;
+        justify-content: center;
+        margin: 10px 10%;
+      }
+      h1 {
+        text-align: center;
+        font-size: 1.5em;
+        color: rgb(72, 72, 72);
+      }
+      #container {
+        height: 60vh;
+        margin: auto;
+      }
+      #controls {
+        list-style: none;
+        display: flex;
+        gap: 1em;
+        justify-content: center;
+        flex-wrap: wrap;
+        max-width: 100%;
+        margin: 1em;
+        padding: 0;
+      }
+      #controls button {
+        width: 15em;
+        height: 2em;
+        background-color: rgb(243, 243, 243);
+        border: 1px solid grey;
+        border-radius: 2px;
+        cursor: pointer;
+        color: darkslategrey;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #result {
+        margin: 1em;
+        text-align: center;
+      }
+      #result.success {
+        color: green;
+      }
+      #result.fail {
+        color: red;
+      }
+    </style>
+  
+  
+    <div id="container"></div>
+    <div id="controls">
+      <button id="next">Start Tutorial</button>
+      <button id="test">Check My Solution</button>
+    </div>
+    <div id="result"></div>
+    <script type="module">
+      import { createPlayground } from 'https://unpkg.com/livecodes@0.1.2';
+
+      const steps = [
+        {
+          btnText: 'Next',
+          panel: 'markup',
+          position: { line: 2, column: 20 },
+          config: {
+            markup: {
+              language: 'html',
+              content: '<h1>Hello,\n  <span id="title">World</span>!\n</h1>',
+            },
+          },
+        },
+        {
+          btnText: 'Next',
+          panel: 'style',
+          position: { line: 2, column: 10 },
+          config: {
+            style: {
+              language: 'css',
+              content: '#title {\n  color: blue;\n}',
+            },
+          },
+        },
+        {
+          btnText: 'Next',
+          panel: 'script',
+          position: { line: 2, column: 19 },
+          config: {
+            script: {
+              language: 'javascript',
+              content:
+                '// change this value to "LiveCodes"\nconst newTitle = "???";\ndocument.querySelector("#title").textContent = newTitle;\nconsole.log(newTitle);',
+            },
+          },
+        },
+        {
+          btnText: 'Final Result',
+          panel: 'console',
+        },
+        {
+          btnText: 'Restart Tutorial',
+          panel: 'result',
+        },
+      ];
+
+      const options = {
+        appUrl: 'https://v10.livecodes.io/',
+        loading: 'eager',
+        config: {
+          markup: {
+            language: 'html',
+            content: 'Welcome to the tutorial!<br>Start by clicking the button below.',
+          },
+          tests: {
+            language: 'javascript',
+            content:
+              'import { screen } from "@testing-library/dom";\nimport "@testing-library/jest-dom";\n\ntest("Should display title", async () => {\n  expect(screen.getByText("Hello", { exact: false })).toHaveTextContent(\n    "Hello, LiveCodes!"\n  );\n});\n\ntest("Title should be blue", async () => {\n  const style = window.getComputedStyle(document.querySelector("#title"));\n  expect(style.color).toBe("rgb(0, 0, 255)");\n});',
+          },
+        },
+      };
+
+      createPlayground('#container', options).then((playground) => {
+        let step = 0;
+        const nextBtn = document.querySelector('#next');
+        const testsBtn = document.querySelector('#test');
+        const testResult = document.querySelector('#result');
+
+        nextBtn.addEventListener('click', async () => {
+          const lastStep = steps.length - 1;
+          const currentStep = steps[step];
+          const prevConfig = step === 0 ? options.config : await playground.getConfig();
+
+          await playground.setConfig({ ...prevConfig, ...currentStep.config });
+          await playground.show(currentStep.panel, currentStep.position);
+
+          nextBtn.textContent = currentStep.btnText;
+          step = step < lastStep ? step + 1 : 0;
+        });
+
+        testsBtn.addEventListener('click', async () => {
+          testResult.textContent = 'Checking your solution...';
+          testResult.classList.remove('success');
+          testResult.classList.remove('fail');
+
+          const { results } = await playground.runTests();
+          if (results.some((result) => result.status === 'fail')) {
+            testResult.textContent = 'Wrong answer, try again!';
+            testResult.classList.add('fail');
+            testResult.classList.remove('success');
+          } else {
+            testResult.textContent = 'Correct answer, well done!';
+            testResult.classList.add('success');
+            testResult.classList.remove('fail');
+          }
+        });
+      });
+    </script>
+  
+<script src="./script.js"></script></body></html>
